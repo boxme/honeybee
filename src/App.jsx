@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { useAuthStore } from './stores/authStore'
-use import { registerSW } from 'virtual:pwa-register'
+import { registerSW } from 'virtual:pwa-register'
 import Home from './components/Home'
 import Login from './components/Login'
 import Events from './components/Events'
