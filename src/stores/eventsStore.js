@@ -1,6 +1,8 @@
 import { create } from 'zustand'
 import { dbService } from '../services/dbService'
 import { eventsService } from '../services/eventsService'
+import { socketService } from '../services/socketService'
+import { useAuthStore } from './authStore'
 
 export const useEventsStore = create((set, get) => ({
   events: [],
@@ -47,6 +49,12 @@ export const useEventsStore = create((set, get) => ({
           e.id === localEvent.id ? { ...remoteEvent, synced: 1 } : e
         )
         set({ events: [...updatedEvents.filter(e => e.id !== localEvent.id), remoteEvent] })
+        
+        // Emit socket event for real-time updates
+        const partner = useAuthStore.getState().partner
+        if (partner) {
+          socketService.emitEventCreated(remoteEvent, partner.id)
+        }
       } catch (syncError) {
         console.log('Event saved locally, will sync when online')
       }

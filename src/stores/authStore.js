@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { authService } from '../services/authService'
+import { socketService } from '../services/socketService'
 
 export const useAuthStore = create(
   persist(
@@ -19,6 +20,13 @@ export const useAuthStore = create(
             partner: result.partner,
             isLoading: false 
           })
+          
+          // Connect to socket for real-time updates
+          const token = localStorage.getItem('token')
+          if (token) {
+            socketService.connect(token, result.user.id, result.partner?.id)
+          }
+          
           return result
         } catch (error) {
           set({ error: error.message, isLoading: false })
@@ -55,6 +63,7 @@ export const useAuthStore = create(
       },
 
       logout: () => {
+        socketService.disconnect()
         set({ user: null, partner: null, error: null })
         authService.logout()
       },
@@ -65,6 +74,9 @@ export const useAuthStore = create(
           try {
             const user = await authService.getCurrentUser()
             set({ user: user.user, partner: user.partner })
+            
+            // Connect to socket for real-time updates
+            socketService.connect(token, user.user.id, user.partner?.id)
           } catch (error) {
             localStorage.removeItem('token')
             set({ user: null, partner: null })

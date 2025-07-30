@@ -4,25 +4,76 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Honeybee is a minimal repository with only a basic README.md file. The project appears to be in its initial setup phase with no established codebase, dependencies, or build system yet.
+Honeybee is a Progressive Web App (PWA) designed for couples to share planned events and activities. The app works offline-first with local SQLite storage and syncs with a remote PostgreSQL database when online.
 
-## Current State
+## Development Commands
 
-- Repository contains only a README.md with the project name "Honeybee"
-- No package.json, requirements.txt, or other dependency management files
-- No source code files present
-- No build, test, or development commands available
-- No established architecture or project structure
+### Frontend (React PWA)
+- `npm run dev` - Start development server
+- `npm run build` - Build for production  
+- `npm run preview` - Preview production build
+- `npm run lint` - Run ESLint
+- `npm run format` - Format code with Prettier
 
-## Development Guidance
+### Backend (Node.js/Express)
+- `npm run server` - Start production server
+- `npm run server:dev` - Start development server with nodemon
 
-Since this is a new/empty repository, development commands and architecture will need to be established as the project grows. When code is added, this file should be updated to include:
+### Database
+- PostgreSQL database required for backend
+- Run `server/db/schema.sql` to set up database schema
+- Configure connection in `server/.env` file
 
-- Build and development commands
-- Testing procedures
-- Project architecture and structure
-- Any specific conventions or patterns adopted
+## Architecture
 
-## Notes
+### Frontend Stack
+- **React 18** - UI framework
+- **Vite** - Build tool with PWA plugin
+- **React Router** - Client-side routing
+- **Zustand** - State management
+- **SQL.js** - Local SQLite database in browser
+- **Socket.io-client** - Real-time updates
+- **React Hook Form** - Form handling
+- **date-fns** - Date manipulation
 
-This repository is in its initial state. Future updates to this file will be needed as the project structure and tooling are established.
+### Backend Stack
+- **Express.js** - Web server
+- **PostgreSQL** - Primary database
+- **Socket.io** - Real-time WebSocket connections
+- **bcrypt** - Password hashing
+- **JWT** - Authentication tokens
+
+### Key Features
+- **Offline-first**: Events stored locally in SQLite, synced when online
+- **Real-time sync**: Socket.io for instant updates between partners
+- **PWA capabilities**: Installable, works offline, push notifications ready
+- **Partner pairing**: 6-character codes to connect two users
+- **Mobile-responsive**: Optimized for iOS and Android browsers
+
+### Project Structure
+```
+src/
+  components/     # React components
+  services/       # API services and database
+  stores/         # Zustand state stores
+  utils/          # Utility functions
+server/
+  routes/         # Express API routes
+  middleware/     # Authentication, etc.
+  db/             # Database schema
+```
+
+## Environment Setup
+
+1. Copy `.env.example` to `.env` and configure
+2. Copy `server/.env.example` to `server/.env` and configure
+3. Set up PostgreSQL database and run schema
+4. Install dependencies: `npm install` and `cd server && npm install`
+
+## Important Notes
+
+- Users are paired through 6-character codes generated on registration
+- Events sync between local SQLite and remote PostgreSQL automatically
+- Socket connections enable real-time sharing between partners
+- PWA manifest configured for mobile installation
+- Service worker handles offline caching
