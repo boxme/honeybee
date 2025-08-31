@@ -5,15 +5,6 @@ const { authenticateToken } = require('../middleware/auth')
 
 const router = express.Router()
 
-// Generate random user code
-function generateUserCode() {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-  let result = ''
-  for (let i = 0; i < 6; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length))
-  }
-  return result
-}
 
 // Register new user
 router.post('/register', async (req, res) => {
@@ -31,19 +22,10 @@ router.post('/register', async (req, res) => {
     const saltRounds = 10
     const passwordHash = await bcrypt.hash(password, saltRounds)
 
-    // Generate unique user code
-    let userCode
-    let isUnique = false
-    while (!isUnique) {
-      userCode = generateUserCode()
-      const codeCheck = await pool.query('SELECT id FROM users WHERE user_code = $1', [userCode])
-      isUnique = codeCheck.rows.length === 0
-    }
-
-    // Create user
+    // Create user (user_code will be auto-generated as UUID v7)
     const result = await pool.query(
-      'INSERT INTO users (name, email, password_hash, user_code) VALUES ($1, $2, $3, $4) RETURNING id, name, email, user_code',
-      [name, email, passwordHash, userCode]
+      'INSERT INTO users (name, email, password_hash) VALUES ($1, $2, $3) RETURNING id, name, email, user_code',
+      [name, email, passwordHash]
     )
 
     const user = result.rows[0]

@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS users (
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
-    user_code VARCHAR(10) UNIQUE NOT NULL,
+    user_code UUID UNIQUE NOT NULL DEFAULT gen_random_uuid_v7(),
     partner_id INTEGER REFERENCES users(id),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -31,19 +31,6 @@ CREATE INDEX IF NOT EXISTS idx_events_date ON events(date);
 CREATE INDEX IF NOT EXISTS idx_users_user_code ON users(user_code);
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 
--- Function to generate random user codes
-CREATE OR REPLACE FUNCTION generate_user_code() RETURNS TEXT AS $$
-DECLARE
-    chars TEXT := 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    result TEXT := '';
-    i INTEGER;
-BEGIN
-    FOR i IN 1..6 LOOP
-        result := result || substr(chars, floor(random() * length(chars) + 1)::INTEGER, 1);
-    END LOOP;
-    RETURN result;
-END;
-$$ LANGUAGE plpgsql;
 
 -- Trigger to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
