@@ -1,10 +1,13 @@
+-- Enable pg_uuidv7 extension for UUID v7 support
+CREATE EXTENSION IF NOT EXISTS pg_uuidv7;
+
 -- Users table
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
-    user_code UUID UNIQUE NOT NULL DEFAULT gen_random_uuid_v7(),
+    user_code UUID UNIQUE NOT NULL DEFAULT uuid_generate_v7(),
     partner_id INTEGER REFERENCES users(id),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
