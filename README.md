@@ -9,7 +9,7 @@ A Progressive Web App (PWA) designed for couples to share planned events and act
 
 #### Prerequisites
 1. **Node.js** (v18+)
-2. **PostgreSQL** (v18+ for UUID v7 support)
+2. **PostgreSQL** (v14+ recommended)
 3. **Git**
 
 #### Environment Setup
@@ -58,7 +58,7 @@ npm run dev
 #### 1. User Registration & Authentication
 **Test Cases:**
 - [ ] Register new user with valid data
-- [ ] Verify UUID v7 user code generation
+- [ ] Verify unique user code generation (nanoid format)
 - [ ] Login with correct credentials
 - [ ] Login with incorrect credentials
 - [ ] Access protected routes with/without JWT
@@ -68,7 +68,7 @@ npm run dev
 1. Open app in browser
 2. Click "Register" and fill form
 3. Verify successful registration and automatic login
-4. Check that user code is UUID format (not 6-char alphanumeric)
+4. Check that user code is generated (21-character nanoid string)
 5. Logout and login again
 6. Test invalid credentials
 

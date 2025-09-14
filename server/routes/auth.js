@@ -1,6 +1,7 @@
 const express = require('express')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
+const { nanoid } = require('nanoid')
 const { authenticateToken } = require('../middleware/auth')
 
 const router = express.Router()
@@ -22,10 +23,13 @@ router.post('/register', async (req, res) => {
     const saltRounds = 10
     const passwordHash = await bcrypt.hash(password, saltRounds)
 
-    // Create user (user_code will be auto-generated as UUID v7)
+    // Generate user code using nanoid
+    const userCode = nanoid()
+
+    // Create user with generated code
     const result = await pool.query(
-      'INSERT INTO users (name, email, password_hash) VALUES ($1, $2, $3) RETURNING id, name, email, user_code',
-      [name, email, passwordHash]
+      'INSERT INTO users (name, email, password_hash, user_code) VALUES ($1, $2, $3, $4) RETURNING id, name, email, user_code',
+      [name, email, passwordHash, userCode]
     )
 
     const user = result.rows[0]
@@ -49,6 +53,12 @@ router.post('/register', async (req, res) => {
     })
   } catch (error) {
     console.error('Registration error:', error)
+
+    // Check for unique constraint violation on user_code
+    if (error.code === '23505' && error.constraint === 'users_user_code_key') {
+      return res.status(500).json({ error: 'Failed to generate unique user code. Please try again.' })
+    }
+
     res.status(500).json({ error: 'Internal server error' })
   }
 })
