@@ -93,24 +93,28 @@ export const useEventsStore = create((set, get) => ({
 
   deleteEvent: async (eventId) => {
     try {
-      // Delete from local database
-      await dbService.deleteEvent(eventId)
-      
-      // Update local state
+      // Update local state first
       const currentEvents = get().events
       const event = currentEvents.find(e => e.id === eventId)
       const filteredEvents = currentEvents.filter(e => e.id !== eventId)
       set({ events: filteredEvents })
 
-      // Try to sync with remote
+      // Try to delete from remote first
       try {
-        if (event?.remote_id) {
-          await eventsService.deleteEvent(event.remote_id)
+        // For remote events, the id IS the remote id; for local events, use remote_id
+        const remoteId = event?.synced ? eventId : event?.remote_id
+        if (remoteId) {
+          await eventsService.deleteEvent(remoteId)
         }
       } catch (syncError) {
-        console.log('Event deleted locally, will sync when online')
+        console.log('Could not delete from remote:', syncError)
       }
+
+      // Always delete from local database
+      await dbService.deleteEvent(eventId)
     } catch (error) {
+      // Restore the event if deletion failed
+      set({ events: currentEvents })
       set({ error: error.message })
       throw error
     }

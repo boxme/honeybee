@@ -39,7 +39,7 @@ function Events() {
     setEditingEvent(event)
     setValue('title', event.title)
     setValue('description', event.description || '')
-    setValue('date', event.date)
+    setValue('date', format(parseISO(event.date), 'yyyy-MM-dd'))
     setValue('time', event.time || '')
     setValue('location', event.location || '')
     setShowForm(true)
