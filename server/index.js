@@ -19,16 +19,22 @@ const io = new Server(server, {
 });
 
 // Database connection configuration
-const isProduction = process.env.NODE_ENV === 'production';
+const isProduction = process.env.NODE_ENV === "production";
 let databaseUrl = process.env.DATABASE_URL;
 
 // For production, ensure SSL mode is in the connection string
-if (isProduction && databaseUrl && !databaseUrl.includes('sslmode')) {
-  databaseUrl += databaseUrl.includes('?') ? '&sslmode=no-verify' : '?sslmode=no-verify';
+if (isProduction && databaseUrl && !databaseUrl.includes("sslmode")) {
+  databaseUrl += databaseUrl.includes("?")
+    ? "&sslmode=no-verify"
+    : "?sslmode=no-verify";
 }
 
 const pool = new Pool({
-  connectionString: databaseUrl
+  connectionString: databaseUrl,
+  ssl: {
+    rejectUnauthorized: true,
+    ca: process.env.DATABASE_CA_CERT,
+  },
 });
 
 // Test database connection asynchronously (non-blocking)
@@ -36,8 +42,11 @@ setTimeout(() => {
   pool.connect((err, client, release) => {
     if (err) {
       console.error("Database connection error:", err.message);
-      console.error("Connection string (masked):", databaseUrl ? 'Set' : 'Not set');
-      console.error("SSL mode:", process.env.PGSSLMODE || 'Not set');
+      console.error(
+        "Connection string (masked):",
+        databaseUrl ? "Set" : "Not set"
+      );
+      console.error("SSL mode:", process.env.PGSSLMODE || "Not set");
     } else {
       console.log("✓ Connected to PostgreSQL database successfully");
       release();

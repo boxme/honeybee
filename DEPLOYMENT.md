@@ -15,6 +15,7 @@ This guide walks you through deploying Honeybee to DigitalOcean App Platform wit
 ### 1. Get a Domain Name
 
 **Option A: Through DigitalOcean (Recommended for simplicity)**
+
 1. Log in to your DigitalOcean account
 2. Navigate to **Networking** → **Domains**
 3. Click **Register Domain**
@@ -23,6 +24,7 @@ This guide walks you through deploying Honeybee to DigitalOcean App Platform wit
 6. Domain will be automatically configured with DigitalOcean DNS
 
 **Option B: Through another registrar (Namecheap, Google Domains, etc.)**
+
 1. Purchase domain through your preferred registrar
 2. Point nameservers to DigitalOcean:
    - `ns1.digitalocean.com`
@@ -81,6 +83,7 @@ git push -u origin main
 4. Click **Next** to save the configuration
 
 **How the routing works:**
+
 - Your frontend will be served at: `yourdomain.com/`
 - Your API will be accessible at: `yourdomain.com/api`
 - Both components are deployed on the same domain, avoiding CORS issues
@@ -90,11 +93,13 @@ git push -u origin main
 If you prefer to configure manually instead of using the app spec:
 
 **Select Region:**
+
 1. When prompted, choose **Singapore** region for optimal performance in Asia
    - Alternative: **Bangalore** if your users are primarily in South Asia
 2. Click **Next**
 
 **Add Database:**
+
 1. Click **Add Resource** → **Database**
 2. Choose **PostgreSQL**
 3. Select version 16 (or latest)
@@ -103,6 +108,7 @@ If you prefer to configure manually instead of using the app spec:
 6. Ensure the database is in the same region (Singapore) as your app
 
 **Configure Backend Service:**
+
 1. Service name: `api`
 2. Source directory: `/server`
 3. Build command: `npm install`
@@ -111,6 +117,7 @@ If you prefer to configure manually instead of using the app spec:
 6. Instance size: Basic ($6/month)
 
 **Add Environment Variables for Backend:**
+
 - `NODE_ENV` = `production`
 - `PORT` = `3001`
 - `DATABASE_URL` = `${honeybee-db.DATABASE_URL}` (auto-filled)
@@ -119,17 +126,20 @@ If you prefer to configure manually instead of using the app spec:
 - `JWT_SECRET` = `[your-generated-secret]` (mark as secret)
 
 **Configure Frontend Static Site:**
+
 1. Click **Add Component** → **Static Site**
 2. Service name: `web`
 3. Build command: `npm install && npm run build`
 4. Output directory: `dist`
 
 **Add Environment Variable for Frontend:**
+
 - `VITE_API_URL` = `${api.PUBLIC_URL}/api` (auto-filled, build-time only)
 
 #### Database Options Explained
 
 **Dev Database (Recommended - Already configured in app.yaml):**
+
 - **Cost**: ~$7/month
 - **Suitable for**: Small to medium production apps, personal projects
 - **Specs**: 1 vCPU, 1GB RAM, 10GB storage
@@ -137,6 +147,7 @@ If you prefer to configure manually instead of using the app spec:
 - **Cons**: Shared infrastructure, less control over scaling
 
 **Production Database Cluster:**
+
 - **Cost**: ~$15/month and up
 - **Suitable for**: High-traffic apps, enterprise use
 - **Specs**: Dedicated resources, configurable
@@ -144,6 +155,7 @@ If you prefer to configure manually instead of using the app spec:
 - **Cons**: More expensive
 
 **To use a Production Database Cluster instead:**
+
 1. Create database cluster manually:
    - Go to **Databases** → **Create Database Cluster**
    - Choose **PostgreSQL 16**, **Singapore** region
@@ -176,7 +188,7 @@ node -e "
 const { Pool } = require('pg');
 const fs = require('fs');
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-const schema = fs.readFileSync('/app/db/schema.sql', 'utf8');
+const schema = fs.readFileSync('db/schema.sql', 'utf8');
 pool.query(schema).then(() => {
   console.log('Schema initialized');
   process.exit(0);
@@ -188,9 +200,11 @@ pool.query(schema).then(() => {
 ```
 
 **Alternative: Run schema manually**
+
 1. Navigate to **Databases** → **honeybee-db**
 2. Click **Connection Details**
 3. Use provided connection string with `psql` locally:
+
 ```bash
 psql "your-connection-string-here" < server/db/schema.sql
 ```
@@ -198,6 +212,7 @@ psql "your-connection-string-here" < server/db/schema.sql
 ### 5. Configure Custom Domain
 
 With the routing configuration, both your frontend and API run on the same domain:
+
 - Frontend: `yourdomain.com/`
 - API: `yourdomain.com/api`
 
@@ -216,10 +231,12 @@ With the routing configuration, both your frontend and API run on the same domai
 #### Verify Environment Variables
 
 The environment variables should already be correctly configured from the app spec:
+
 - `CLIENT_URL` = `${web.PUBLIC_URL}` (your domain)
 - `VITE_API_URL` = `${_self.PUBLIC_URL}/api` (your domain + /api)
 
 No manual updates needed! If you want to verify:
+
 1. Go to **Settings** → **App-Level Environment Variables**
 2. Check that the values look correct
 3. After domain is added, these will resolve to your custom domain
@@ -242,6 +259,7 @@ Socket.io should work automatically on App Platform, but verify:
 4. Verify it appears in real-time in the other browser
 
 **Troubleshooting Socket.io:**
+
 - App Platform supports WebSockets by default on ports 80/443
 - Check browser console for connection errors
 - Verify `CLIENT_URL` environment variable is correct
@@ -250,14 +268,17 @@ Socket.io should work automatically on App Platform, but verify:
 ### 8. Monitor and Scale
 
 **View Logs:**
+
 - Go to **Apps** → **Your App** → **Runtime Logs**
 - Select `api` or `web` to view respective logs
 
 **Monitor Performance:**
+
 - Check **Metrics** tab for CPU, memory, and bandwidth usage
 - Review **Activity** tab for deployment history
 
 **Scale Up (if needed):**
+
 - Go to **Settings** → **Components**
 - Click on a component to upgrade instance size
 - Adjust instance count for horizontal scaling
@@ -287,12 +308,14 @@ Socket.io should work automatically on App Platform, but verify:
 Your app is now a full PWA:
 
 **On Mobile (iOS/Android):**
+
 1. Visit your domain in Safari/Chrome
 2. Tap share icon
 3. Select "Add to Home Screen"
 4. App now works offline!
 
 **On Desktop:**
+
 1. Visit your domain in Chrome/Edge
 2. Look for install icon in address bar
 3. Click to install as standalone app
@@ -300,6 +323,7 @@ Your app is now a full PWA:
 ### Monitoring
 
 Set up alerts:
+
 1. Go to **Settings** → **Alerts**
 2. Enable alerts for:
    - Deployment failures
@@ -321,6 +345,7 @@ git push origin main
 ```
 
 Monitor deployment progress:
+
 - **Apps** → **Your App** → **Activity**
 
 ## Troubleshooting
@@ -328,6 +353,7 @@ Monitor deployment progress:
 ### Build Failures
 
 Check build logs in the Activity tab. Common issues:
+
 - Missing dependencies: Ensure package.json is complete
 - Build command errors: Verify commands work locally
 - Environment variables: Check all required vars are set
@@ -343,6 +369,7 @@ This has been fixed with multiple redundant solutions:
 **Cause**: DigitalOcean managed databases require SSL connections but use self-signed certificates
 
 **Fixes Applied (all automatic)**:
+
 1. **Environment Variable**: `PGSSLMODE=no-verify` in app.yaml:39-41
    - This is the PostgreSQL-native way to handle SSL
    - Automatically applied in your deployment
@@ -351,6 +378,7 @@ This has been fixed with multiple redundant solutions:
    - Fallback if environment variable doesn't work
 
 **If still encountering issues**:
+
 1. Check logs: **Apps** → **Your App** → **Runtime Logs** → Select `api`
 2. Verify `NODE_ENV` is set to `production`
 3. Verify `PGSSLMODE` environment variable is set
@@ -367,6 +395,7 @@ This has been fixed with multiple redundant solutions:
 ### CORS Errors
 
 If API calls fail with CORS errors:
+
 1. Verify `CLIENT_URL` matches your frontend domain exactly (including https://)
 2. Check server/index.js:15-18 for CORS configuration
 3. Ensure no trailing slashes in URLs
