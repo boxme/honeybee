@@ -31,15 +31,19 @@ const pool = new Pool({
   connectionString: databaseUrl
 });
 
-// Test database connection
-pool.connect((err, client, release) => {
-  if (err) {
-    console.error("Error acquiring client:", err.stack);
-  } else {
-    console.log("Connected to PostgreSQL database");
-    release();
-  }
-});
+// Test database connection asynchronously (non-blocking)
+setTimeout(() => {
+  pool.connect((err, client, release) => {
+    if (err) {
+      console.error("Database connection error:", err.message);
+      console.error("Connection string (masked):", databaseUrl ? 'Set' : 'Not set');
+      console.error("SSL mode:", process.env.PGSSLMODE || 'Not set');
+    } else {
+      console.log("✓ Connected to PostgreSQL database successfully");
+      release();
+    }
+  });
+}, 100);
 
 // Middleware
 app.use(cors());
@@ -47,6 +51,11 @@ app.use(express.json());
 
 // Make pool available to routes
 app.locals.pool = pool;
+
+// Health check endpoint (doesn't require database)
+app.get("/api/health", (req, res) => {
+  res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
+});
 
 // Routes
 app.use("/api/auth", authRoutes);
