@@ -36,6 +36,9 @@ services:
         scope: RUN_TIME
         type: SECRET
         value: ${honeybee-db.DATABASE_URL}
+      - key: PGSSLMODE
+        scope: RUN_TIME
+        value: no-verify
       - key: CLIENT_URL
         scope: RUN_TIME
         value: ${web.PUBLIC_URL}

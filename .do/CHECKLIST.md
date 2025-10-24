@@ -29,6 +29,7 @@ Use this checklist when deploying to DigitalOcean App Platform.
   - [ ] NODE_ENV=production
   - [ ] PORT=3001
   - [ ] DATABASE_URL (auto-configured)
+  - [ ] PGSSLMODE=no-verify (for SSL connection to database)
   - [ ] CLIENT_URL (set after frontend domain configured)
   - [ ] JWT_SECRET (strong random string)
   - [ ] VITE_API_URL (auto-configured with ${api.PUBLIC_URL}/api)

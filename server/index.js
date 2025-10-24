@@ -18,12 +18,17 @@ const io = new Server(server, {
   },
 });
 
-// Database connection
+// Database connection configuration
+const isProduction = process.env.NODE_ENV === 'production';
+let databaseUrl = process.env.DATABASE_URL;
+
+// For production, ensure SSL mode is in the connection string
+if (isProduction && databaseUrl && !databaseUrl.includes('sslmode')) {
+  databaseUrl += databaseUrl.includes('?') ? '&sslmode=no-verify' : '?sslmode=no-verify';
+}
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? {
-    rejectUnauthorized: false
-  } : false
+  connectionString: databaseUrl
 });
 
 // Test database connection

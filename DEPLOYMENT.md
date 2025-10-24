@@ -114,6 +114,7 @@ If you prefer to configure manually instead of using the app spec:
 - `NODE_ENV` = `production`
 - `PORT` = `3001`
 - `DATABASE_URL` = `${honeybee-db.DATABASE_URL}` (auto-filled)
+- `PGSSLMODE` = `no-verify` (handles SSL for DigitalOcean database)
 - `CLIENT_URL` = `${web.PUBLIC_URL}` (auto-filled after frontend is set up)
 - `JWT_SECRET` = `[your-generated-secret]` (mark as secret)
 
@@ -335,11 +336,25 @@ Check build logs in the Activity tab. Common issues:
 
 **"Self-signed certificate" or SSL Errors:**
 
-This has been fixed in the codebase. If you encounter this error:
-- Error: `self-signed certificate in certificate chain`
-- **Cause**: DigitalOcean managed databases require SSL connections
-- **Fix**: The code now includes SSL configuration in server/index.js:22-27
-- Ensure your code is up to date and redeploy
+This has been fixed with multiple redundant solutions:
+
+**Error**: `self-signed certificate in certificate chain`
+
+**Cause**: DigitalOcean managed databases require SSL connections but use self-signed certificates
+
+**Fixes Applied (all automatic)**:
+1. **Environment Variable**: `PGSSLMODE=no-verify` in app.yaml:39-41
+   - This is the PostgreSQL-native way to handle SSL
+   - Automatically applied in your deployment
+2. **Code-level SSL handling**: server/index.js:21-32
+   - Appends `sslmode=no-verify` to connection string in production
+   - Fallback if environment variable doesn't work
+
+**If still encountering issues**:
+1. Check logs: **Apps** → **Your App** → **Runtime Logs** → Select `api`
+2. Verify `NODE_ENV` is set to `production`
+3. Verify `PGSSLMODE` environment variable is set
+4. Try manual redeploy: **Apps** → **Your App** → **Activity** → **Redeploy**
 
 **General Database Issues:**
 
