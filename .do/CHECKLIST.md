@@ -36,8 +36,8 @@ Use this checklist when deploying to DigitalOcean App Platform.
 ## Post-Deployment
 
 - [ ] Database schema initialized
-- [ ] Frontend domain configured (e.g., honeybee.app)
-- [ ] API subdomain configured (e.g., api.honeybee.app)
+- [ ] Custom domain configured (e.g., honeybee.app)
+  - Note: Only add domain to 'web' component - API is automatically at yourdomain.com/api
 - [ ] SSL certificates active (check for lock icon)
 - [ ] Test account registration
 - [ ] Test user pairing with 6-character code
@@ -109,7 +109,8 @@ If deployment fails:
 
 - [ ] Set budget alerts in DigitalOcean
 - [ ] Review monthly billing
-- [ ] Expected: ~$27/month for basic setup
+- [ ] Expected: ~$19/month for basic setup (dev database)
+  - Upgrade to production database cluster if needed (~$8-15/month more)
 
 ## Notes
 

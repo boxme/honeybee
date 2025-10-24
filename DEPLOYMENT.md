@@ -8,7 +8,7 @@ This guide walks you through deploying Honeybee to DigitalOcean App Platform wit
 
 - DigitalOcean account
 - GitHub account with this repository
-- Credit card for domain registration and hosting (~$20-25/month total)
+- Credit card for domain registration and hosting (~$19/month total)
 
 ## Deployment Steps
 
@@ -64,17 +64,26 @@ git push -u origin main
 #### Configure Using App Spec (Recommended)
 
 1. Click **Edit Your App Spec**
-2. Replace the entire content with the contents of `.do/app.yaml`
+2. Copy the entire content from `.do/app.yaml` and paste it into the editor
 3. Update these values in the spec:
-   - Replace `YOUR_GITHUB_USERNAME/honeybee` with your actual repo path
+   - Replace `YOUR_GITHUB_USERNAME/honeybee` (appears twice) with your actual GitHub username and repo
    - **Region is pre-configured to `sgp` (Singapore)** for optimal performance in Asia
      - Other Asia options: `blr` (Bangalore, India)
      - If you need a different region, update line 2 of the app.yaml
+   - **Database**: Configured as dev database (production: false)
+     - This is suitable for production use and costs less (~$7/month vs $15/month)
+     - For dedicated production cluster, see "Database Options" section below
    - Generate a strong JWT secret:
      ```bash
      node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
      ```
    - Replace `CHANGE_THIS_TO_RANDOM_STRING` with the generated secret
+4. Click **Next** to save the configuration
+
+**How the routing works:**
+- Your frontend will be served at: `yourdomain.com/`
+- Your API will be accessible at: `yourdomain.com/api`
+- Both components are deployed on the same domain, avoiding CORS issues
 
 #### Manual Configuration Alternative
 
@@ -117,6 +126,40 @@ If you prefer to configure manually instead of using the app spec:
 **Add Environment Variable for Frontend:**
 - `VITE_API_URL` = `${api.PUBLIC_URL}/api` (auto-filled, build-time only)
 
+#### Database Options Explained
+
+**Dev Database (Recommended - Already configured in app.yaml):**
+- **Cost**: ~$7/month
+- **Suitable for**: Small to medium production apps, personal projects
+- **Specs**: 1 vCPU, 1GB RAM, 10GB storage
+- **Pros**: Cheaper, automatically managed by App Platform
+- **Cons**: Shared infrastructure, less control over scaling
+
+**Production Database Cluster:**
+- **Cost**: ~$15/month and up
+- **Suitable for**: High-traffic apps, enterprise use
+- **Specs**: Dedicated resources, configurable
+- **Pros**: Better performance, more control, automatic backups, high availability
+- **Cons**: More expensive
+
+**To use a Production Database Cluster instead:**
+1. Create database cluster manually:
+   - Go to **Databases** → **Create Database Cluster**
+   - Choose **PostgreSQL 16**, **Singapore** region
+   - Select **Basic** or higher plan
+   - Note the cluster name
+2. Update `.do/app.yaml`:
+   ```yaml
+   databases:
+     - name: honeybee-db
+       engine: PG
+       production: true
+       cluster_name: your-cluster-name-here
+   ```
+3. Deploy with updated spec
+
+For most users starting out, the **dev database is perfectly fine for production use** and you can always migrate to a dedicated cluster later if needed.
+
 ### 4. Initialize Database Schema
 
 After the app is deployed:
@@ -153,7 +196,11 @@ psql "your-connection-string-here" < server/db/schema.sql
 
 ### 5. Configure Custom Domain
 
-#### Set up Domain for Frontend
+With the routing configuration, both your frontend and API run on the same domain:
+- Frontend: `yourdomain.com/`
+- API: `yourdomain.com/api`
+
+#### Set up Domain
 
 1. Go to your app in DigitalOcean
 2. Click **Settings** → **Domains**
@@ -163,21 +210,18 @@ psql "your-connection-string-here" < server/db/schema.sql
 6. If using DigitalOcean DNS, records are added automatically
 7. Click **Add Domain**
 
-#### Set up Subdomain for API
+**Note:** You only need to add the domain once to the `web` component. The routing configuration automatically makes the API accessible at `yourdomain.com/api`.
 
-1. Add another domain for the `api` component
-2. Use a subdomain like `api.honeybee.app`
-3. Add the DNS records as instructed
-4. Click **Add Domain**
+#### Verify Environment Variables
 
-#### Update Environment Variables
+The environment variables should already be correctly configured from the app spec:
+- `CLIENT_URL` = `${web.PUBLIC_URL}` (your domain)
+- `VITE_API_URL` = `${_self.PUBLIC_URL}/api` (your domain + /api)
 
-After domains are configured:
-
+No manual updates needed! If you want to verify:
 1. Go to **Settings** → **App-Level Environment Variables**
-2. Update `CLIENT_URL` to your frontend domain (e.g., `https://honeybee.app`)
-3. Update `VITE_API_URL` to your API domain (e.g., `https://api.honeybee.app/api`)
-4. Click **Save** (this will trigger a redeployment)
+2. Check that the values look correct
+3. After domain is added, these will resolve to your custom domain
 
 ### 6. Enable HTTPS (SSL)
 
@@ -220,10 +264,12 @@ Socket.io should work automatically on App Platform, but verify:
 ## Deployment Costs Breakdown
 
 - **App Platform (Basic)**: ~$6/month per service × 2 = $12/month
-- **PostgreSQL Database (Basic)**: ~$15/month
+- **PostgreSQL Dev Database**: ~$7/month
 - **Domain Registration**: ~$10-15/year
 - **SSL Certificate**: Free (Let's Encrypt)
-- **Total**: ~$27/month + ~$12/year
+- **Total**: ~$19/month + ~$12/year
+
+**Note**: If you upgrade to a production database cluster later, add ~$8-15/month more.
 
 ## Post-Deployment Tasks
 
@@ -287,10 +333,21 @@ Check build logs in the Activity tab. Common issues:
 
 ### Database Connection Issues
 
-1. Verify `DATABASE_URL` is correctly set
+**"Self-signed certificate" or SSL Errors:**
+
+This has been fixed in the codebase. If you encounter this error:
+- Error: `self-signed certificate in certificate chain`
+- **Cause**: DigitalOcean managed databases require SSL connections
+- **Fix**: The code now includes SSL configuration in server/index.js:22-27
+- Ensure your code is up to date and redeploy
+
+**General Database Issues:**
+
+1. Verify `DATABASE_URL` is correctly set in environment variables
 2. Check database is running: **Databases** → **honeybee-db**
 3. Review API logs for connection errors
-4. Ensure schema is initialized
+4. Ensure schema is initialized (see section 4 above)
+5. Confirm database and app are in the same region (Singapore)
 
 ### CORS Errors
 

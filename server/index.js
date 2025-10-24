@@ -21,12 +21,14 @@ const io = new Server(server, {
 // Database connection
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' ? {
+    rejectUnauthorized: false
+  } : false
 });
 
 // Test database connection
 pool.connect((err, client, release) => {
   if (err) {
-    console.log(process.env.DATABASE_UR);
     console.error("Error acquiring client:", err.stack);
   } else {
     console.log("Connected to PostgreSQL database");
