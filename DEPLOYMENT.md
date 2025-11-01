@@ -134,7 +134,7 @@ If you prefer to configure manually instead of using the app spec:
 
 **Add Environment Variable for Frontend:**
 
-- `VITE_API_URL` = `${api.PUBLIC_URL}/api` (auto-filled, build-time only)
+- `VITE_API_URL` = `/api` (relative path, since API and frontend are on same domain)
 
 #### Database Options Explained
 
@@ -233,7 +233,7 @@ With the routing configuration, both your frontend and API run on the same domai
 The environment variables should already be correctly configured from the app spec:
 
 - `CLIENT_URL` = `${web.PUBLIC_URL}` (your domain)
-- `VITE_API_URL` = `${_self.PUBLIC_URL}/api` (your domain + /api)
+- `VITE_API_URL` = `/api` (relative path for same-domain routing)
 
 No manual updates needed! If you want to verify:
 
@@ -391,6 +391,24 @@ This has been fixed with multiple redundant solutions:
 3. Review API logs for connection errors
 4. Ensure schema is initialized (see section 4 above)
 5. Confirm database and app are in the same region (Singapore)
+
+### 405 Method Not Allowed Errors
+
+If registration/login fails with 405 errors:
+
+**Cause**: Frontend is calling the wrong URL or `VITE_API_URL` is misconfigured
+
+**Fix**:
+1. Check the **web** component's environment variables
+2. Verify `VITE_API_URL` = `/api` (not `${_self.PUBLIC_URL}/api`)
+3. If incorrect, update `.do/app.yaml` line 69 to `value: /api`
+4. Commit and push to trigger rebuild:
+   ```bash
+   git add .do/app.yaml
+   git commit -m "Fix VITE_API_URL for same-domain routing"
+   git push origin main
+   ```
+5. Wait for frontend rebuild to complete
 
 ### CORS Errors
 
