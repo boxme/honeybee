@@ -31,10 +31,9 @@ if (isProduction && databaseUrl && !databaseUrl.includes("sslmode")) {
 
 const pool = new Pool({
   connectionString: databaseUrl,
-  ssl: {
-    rejectUnauthorized: true,
-    ca: process.env.DATABASE_CA_CERT,
-  },
+  ssl: isProduction ? {
+    rejectUnauthorized: false, // DigitalOcean uses self-signed certificates
+  } : false,
 });
 
 // Test database connection asynchronously (non-blocking)
@@ -46,9 +45,11 @@ setTimeout(() => {
         "Connection string (masked):",
         databaseUrl ? "Set" : "Not set"
       );
-      console.error("SSL mode:", process.env.PGSSLMODE || "Not set");
+      console.error("SSL mode (PGSSLMODE):", process.env.PGSSLMODE || "Not set");
+      console.error("SSL config:", isProduction ? "rejectUnauthorized: false" : "disabled");
     } else {
       console.log("✓ Connected to PostgreSQL database successfully");
+      console.log("Database SSL mode:", isProduction ? "enabled (no-verify)" : "disabled");
       release();
     }
   });
