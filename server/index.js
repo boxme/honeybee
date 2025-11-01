@@ -22,19 +22,32 @@ const io = new Server(server, {
 const isProduction = process.env.NODE_ENV === "production";
 let databaseUrl = process.env.DATABASE_URL;
 
-// For production, ensure SSL mode is in the connection string
-if (isProduction && databaseUrl && !databaseUrl.includes("sslmode")) {
-  databaseUrl += databaseUrl.includes("?")
-    ? "&sslmode=no-verify"
-    : "?sslmode=no-verify";
+// For DigitalOcean managed databases, handle SSL properly
+// Remove any existing SSL parameters from connection string to avoid conflicts
+if (isProduction && databaseUrl) {
+  // Remove sslmode parameter if it exists
+  databaseUrl = databaseUrl.replace(/[?&]sslmode=[^&]*/g, '');
+  // Remove ssl=true/false parameter if it exists
+  databaseUrl = databaseUrl.replace(/[?&]ssl=(true|false)/g, '');
+  // Remove trailing ? or & if they exist
+  databaseUrl = databaseUrl.replace(/[?&]$/, '');
+
+  console.log('Production mode: Using SSL with rejectUnauthorized: false');
 }
 
-const pool = new Pool({
+// Configure the pool with explicit SSL settings
+const poolConfig = {
   connectionString: databaseUrl,
-  ssl: isProduction ? {
-    rejectUnauthorized: false, // DigitalOcean uses self-signed certificates
-  } : false,
-});
+};
+
+// In production, explicitly configure SSL to accept self-signed certificates
+if (isProduction) {
+  poolConfig.ssl = {
+    rejectUnauthorized: false, // Accept DigitalOcean's self-signed certificates
+  };
+}
+
+const pool = new Pool(poolConfig);
 
 // Test database connection asynchronously (non-blocking)
 setTimeout(() => {
