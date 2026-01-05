@@ -23,8 +23,8 @@ router.post('/register', async (req, res) => {
     const saltRounds = 10
     const passwordHash = await bcrypt.hash(password, saltRounds)
 
-    // Generate user code using nanoid
-    const userCode = nanoid()
+    // Generate 6-character user code for partner pairing
+    const userCode = nanoid(6)
 
     // Create user with generated code
     const result = await pool.query(
