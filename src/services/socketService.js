@@ -12,7 +12,7 @@ class SocketService {
       return
     }
 
-    const serverUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001'
+    const serverUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || ''
     
     this.socket = io(serverUrl, {
       auth: {
