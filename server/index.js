@@ -76,13 +76,13 @@ app.use(express.json());
 app.locals.pool = pool;
 
 // Health check endpoint (doesn't require database)
-app.get("/api/health", (req, res) => {
+app.get("/health", (req, res) => {
   res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
-// Routes
-app.use("/api/auth", authRoutes);
-app.use("/api/events", eventRoutes);
+// Routes - DigitalOcean App Platform strips /api prefix, so routes are at root
+app.use("/auth", authRoutes);
+app.use("/events", eventRoutes);
 
 // Socket.io for real-time updates
 io.use(authenticateSocket);
