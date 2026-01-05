@@ -76,7 +76,9 @@ app.use(express.json());
 app.locals.pool = pool;
 
 // Health check endpoint (doesn't require database)
-app.get("/health", (req, res) => {
+// /api/health for DigitalOcean readiness probe (hits service directly)
+// /health for external requests (routing strips /api prefix)
+app.get(["/api/health", "/health"], (req, res) => {
   res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
