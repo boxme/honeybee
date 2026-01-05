@@ -6,7 +6,7 @@ import { useAuthStore } from '../stores/authStore'
 function Login() {
   const [isLogin, setIsLogin] = useState(true)
   const { register, handleSubmit, formState: { errors } } = useForm()
-  const { login, register: registerUser, isLoading, error } = useAuthStore()
+  const { login, register: registerUser, isLoading, error, clearError } = useAuthStore()
   const navigate = useNavigate()
 
   const onSubmit = async (data) => {
@@ -29,7 +29,20 @@ function Login() {
         
         {error && (
           <div className="error-message">
-            {error}
+            {isLogin ? (
+              <>
+                <p>Unable to sign in. This email may not have an account yet.</p>
+                <button
+                  type="button"
+                  onClick={() => { clearError(); setIsLogin(false); }}
+                  className="error-link-button"
+                >
+                  Create an account instead?
+                </button>
+              </>
+            ) : (
+              <p>{error}</p>
+            )}
           </div>
         )}
 
@@ -90,9 +103,9 @@ function Login() {
         </form>
 
         <div className="auth-switch">
-          <button 
+          <button
             type="button"
-            onClick={() => setIsLogin(!isLogin)}
+            onClick={() => { clearError(); setIsLogin(!isLogin); }}
             className="link-button"
           >
             {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
@@ -131,6 +144,24 @@ function Login() {
           border-radius: 8px;
           margin-bottom: 16px;
           text-align: center;
+        }
+
+        .error-message p {
+          margin: 0 0 8px 0;
+        }
+
+        .error-link-button {
+          background: none;
+          border: none;
+          color: #c33;
+          cursor: pointer;
+          text-decoration: underline;
+          font-size: 14px;
+          font-weight: 500;
+        }
+
+        .error-link-button:hover {
+          color: #a22;
         }
         
         .error {
