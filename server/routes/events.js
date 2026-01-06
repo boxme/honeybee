@@ -97,10 +97,10 @@ router.put('/:id', async (req, res) => {
     )
 
     const event = result.rows[0]
-    
+
     // Get creator name
-    const userResult = await pool.query('SELECT name FROM users WHERE id = $1', [req.user.id])
-    event.created_by_name = userResult.rows[0]?.name
+    const creatorResult = await pool.query('SELECT name FROM users WHERE id = $1', [event.created_by])
+    event.created_by_name = creatorResult.rows[0]?.name
 
     res.json(event)
   } catch (error) {
