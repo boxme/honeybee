@@ -2,9 +2,8 @@ import React from 'react'
 import { format, parseISO } from 'date-fns'
 
 function EventCard({ event, currentUserId, onEdit, onDelete }) {
-  const isOwner = event.created_by === currentUserId
   const eventDate = parseISO(event.date)
-  
+
   return (
     <div className="event-card">
       <div className="event-header">
@@ -12,7 +11,7 @@ function EventCard({ event, currentUserId, onEdit, onDelete }) {
           <div className="date-day">{format(eventDate, 'dd')}</div>
           <div className="date-month">{format(eventDate, 'MMM')}</div>
         </div>
-        
+
         <div className="event-info">
           <h3>{event.title}</h3>
           {event.time && (
@@ -25,17 +24,15 @@ function EventCard({ event, currentUserId, onEdit, onDelete }) {
             Created by {event.created_by_name || 'You'}
           </div>
         </div>
-        
-        {isOwner && (
-          <div className="event-actions">
-            <button onClick={() => onEdit(event)} className="edit-btn">
-              ✏️
-            </button>
-            <button onClick={() => onDelete(event.id)} className="delete-btn">
-              🗑️
-            </button>
-          </div>
-        )}
+
+        <div className="event-actions">
+          <button onClick={() => onEdit(event)} className="edit-btn">
+            ✏️
+          </button>
+          <button onClick={() => onDelete(event.id)} className="delete-btn">
+            🗑️
+          </button>
+        </div>
       </div>
       
       {event.description && (

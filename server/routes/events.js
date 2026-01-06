@@ -71,13 +71,20 @@ router.put('/:id', async (req, res) => {
   const pool = req.app.locals.pool
 
   try {
-    // Check if user owns this event
+    // Check if event exists and get its creator
     const ownerCheck = await pool.query('SELECT created_by FROM events WHERE id = $1', [id])
     if (ownerCheck.rows.length === 0) {
       return res.status(404).json({ error: 'Event not found' })
     }
-    
-    if (ownerCheck.rows[0].created_by !== req.user.id) {
+
+    const eventCreator = ownerCheck.rows[0].created_by
+
+    // Get user's partner ID
+    const userResult = await pool.query('SELECT partner_id FROM users WHERE id = $1', [req.user.id])
+    const partnerId = userResult.rows[0]?.partner_id
+
+    // Allow if user is owner or if event was created by partner
+    if (eventCreator !== req.user.id && eventCreator !== partnerId) {
       return res.status(403).json({ error: 'Not authorized to update this event' })
     }
 
@@ -108,13 +115,20 @@ router.delete('/:id', async (req, res) => {
   const pool = req.app.locals.pool
 
   try {
-    // Check if user owns this event
+    // Check if event exists and get its creator
     const ownerCheck = await pool.query('SELECT created_by FROM events WHERE id = $1', [id])
     if (ownerCheck.rows.length === 0) {
       return res.status(404).json({ error: 'Event not found' })
     }
-    
-    if (ownerCheck.rows[0].created_by !== req.user.id) {
+
+    const eventCreator = ownerCheck.rows[0].created_by
+
+    // Get user's partner ID
+    const userResult = await pool.query('SELECT partner_id FROM users WHERE id = $1', [req.user.id])
+    const partnerId = userResult.rows[0]?.partner_id
+
+    // Allow if user is owner or if event was created by partner
+    if (eventCreator !== req.user.id && eventCreator !== partnerId) {
       return res.status(403).json({ error: 'Not authorized to delete this event' })
     }
 
