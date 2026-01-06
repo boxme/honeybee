@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { format, parseISO } from 'date-fns'
 import { useEventsStore } from '../stores/eventsStore'
@@ -8,14 +8,75 @@ import EventCard from './EventCard'
 function Events() {
   const [showForm, setShowForm] = useState(false)
   const [editingEvent, setEditingEvent] = useState(null)
+  const [pullDistance, setPullDistance] = useState(0)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm()
-  
+
   const { events, isLoading, createEvent, updateEvent, deleteEvent, loadEvents } = useEventsStore()
   const { user } = useAuthStore()
+
+  const containerRef = useRef(null)
+  const PULL_THRESHOLD = 80
 
   useEffect(() => {
     loadEvents()
   }, [loadEvents])
+
+  // Pull-to-refresh touch handlers with non-passive listeners for iOS
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+
+    let startY = 0
+    let currentPull = 0
+
+    const onTouchStart = (e) => {
+      if (container.scrollTop === 0) {
+        startY = e.touches[0].clientY
+      }
+    }
+
+    const onTouchMove = (e) => {
+      if (isRefreshing || startY === 0) return
+
+      if (container.scrollTop > 0) {
+        currentPull = 0
+        setPullDistance(0)
+        return
+      }
+
+      const touchY = e.touches[0].clientY
+      const distance = touchY - startY
+
+      if (distance > 0) {
+        e.preventDefault()
+        currentPull = Math.min(distance * 0.5, 120)
+        setPullDistance(currentPull)
+      }
+    }
+
+    const onTouchEnd = async () => {
+      if (currentPull >= PULL_THRESHOLD && !isRefreshing) {
+        setIsRefreshing(true)
+        setPullDistance(PULL_THRESHOLD)
+        await loadEvents()
+        setIsRefreshing(false)
+      }
+      setPullDistance(0)
+      startY = 0
+      currentPull = 0
+    }
+
+    container.addEventListener('touchstart', onTouchStart, { passive: true })
+    container.addEventListener('touchmove', onTouchMove, { passive: false })
+    container.addEventListener('touchend', onTouchEnd, { passive: true })
+
+    return () => {
+      container.removeEventListener('touchstart', onTouchStart)
+      container.removeEventListener('touchmove', onTouchMove)
+      container.removeEventListener('touchend', onTouchEnd)
+    }
+  }, [isRefreshing, loadEvents])
 
   const onSubmit = async (data) => {
     try {
@@ -62,10 +123,23 @@ function Events() {
   }
 
   return (
-    <div className="events-container">
+    <div className="events-container" ref={containerRef}>
+      <div
+        className="pull-indicator"
+        style={{
+          height: pullDistance,
+          opacity: Math.min(pullDistance / PULL_THRESHOLD, 1)
+        }}
+      >
+        <div className={`pull-spinner ${isRefreshing ? 'spinning' : ''}`}>
+          {isRefreshing ? '...' : '↓'}
+        </div>
+        <span>{isRefreshing ? 'Refreshing...' : pullDistance >= PULL_THRESHOLD ? 'Release to refresh' : 'Pull to refresh'}</span>
+      </div>
+
       <div className="events-header">
-        <h1>📅 Your Events</h1>
-        <button 
+        <h1>Your Events</h1>
+        <button
           onClick={() => setShowForm(true)}
           className="btn btn-primary"
         >
@@ -167,8 +241,36 @@ function Events() {
       <style jsx>{`
         .events-container {
           padding: 20px 0;
+          overflow-y: auto;
+          -webkit-overflow-scrolling: touch;
         }
-        
+
+        .pull-indicator {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+          color: #666;
+          font-size: 14px;
+          gap: 4px;
+          transition: opacity 0.2s ease;
+        }
+
+        .pull-spinner {
+          font-size: 20px;
+          transition: transform 0.2s ease;
+        }
+
+        .pull-spinner.spinning {
+          animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+
         .events-header {
           display: flex;
           justify-content: space-between;
