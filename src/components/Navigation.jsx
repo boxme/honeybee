@@ -14,14 +14,16 @@ function Navigation() {
         </span>
         
         <div className="nav-links">
-          <Link 
-            to="/events" 
+          <Link
+            to="/events"
+            replace
             className={`nav-link ${location.pathname === '/events' || location.pathname === '/' ? 'active' : ''}`}
           >
             📅 Events
           </Link>
-          <Link 
-            to="/profile" 
+          <Link
+            to="/profile"
+            replace
             className={`nav-link ${location.pathname === '/profile' ? 'active' : ''}`}
           >
             👤 Profile
