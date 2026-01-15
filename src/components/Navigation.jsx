@@ -9,14 +9,14 @@ function Navigation() {
   return (
     <nav className="navigation">
       <div className="nav-container">
-        <Link to="/" className="nav-brand">
+        <span className="nav-brand">
           🐝 Honeybee
-        </Link>
+        </span>
         
         <div className="nav-links">
           <Link 
             to="/events" 
-            className={`nav-link ${location.pathname === '/events' ? 'active' : ''}`}
+            className={`nav-link ${location.pathname === '/events' || location.pathname === '/' ? 'active' : ''}`}
           >
             📅 Events
           </Link>
