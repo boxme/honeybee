@@ -10,7 +10,11 @@ function Events() {
   const [editingEvent, setEditingEvent] = useState(null)
   const [pullDistance, setPullDistance] = useState(0)
   const [isRefreshing, setIsRefreshing] = useState(false)
-  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm()
+  const [isAllDay, setIsAllDay] = useState(true)
+  const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm()
+
+  const startTime = watch('start_time')
+  const endTime = watch('end_time')
 
   const { events, isLoading, createEvent, updateEvent, deleteEvent, loadEvents } = useEventsStore()
   const { user } = useAuthStore()
@@ -80,16 +84,26 @@ function Events() {
 
   const onSubmit = async (data) => {
     try {
+      const eventData = {
+        title: data.title,
+        description: data.description,
+        date: data.date,
+        start_time: isAllDay ? null : data.start_time,
+        end_time: isAllDay ? null : data.end_time,
+        location: data.location
+      }
+
       if (editingEvent) {
-        await updateEvent(editingEvent.id, data)
+        await updateEvent(editingEvent.id, eventData)
         setEditingEvent(null)
       } else {
         await createEvent({
-          ...data,
+          ...eventData,
           created_by: user.id
         })
       }
       reset()
+      setIsAllDay(true)
       setShowForm(false)
     } catch (error) {
       console.error('Error saving event:', error)
@@ -101,8 +115,10 @@ function Events() {
     setValue('title', event.title)
     setValue('description', event.description || '')
     setValue('date', format(parseISO(event.date), 'yyyy-MM-dd'))
-    setValue('time', event.time || '')
+    setValue('start_time', event.start_time || '')
+    setValue('end_time', event.end_time || '')
     setValue('location', event.location || '')
+    setIsAllDay(!event.start_time && !event.end_time)
     setShowForm(true)
   }
 
@@ -115,6 +131,7 @@ function Events() {
   const handleCancel = () => {
     setShowForm(false)
     setEditingEvent(null)
+    setIsAllDay(true)
     reset()
   }
 
@@ -176,26 +193,60 @@ function Events() {
                 />
               </div>
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-label">Date</label>
-                  <input
-                    {...register('date', { required: 'Date is required' })}
-                    type="date"
-                    className="form-input"
-                  />
-                  {errors.date && <span className="error">{errors.date.message}</span>}
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Time</label>
-                  <input
-                    {...register('time')}
-                    type="time"
-                    className="form-input"
-                  />
-                </div>
+              <div className="form-group">
+                <label className="form-label">Date</label>
+                <input
+                  {...register('date', { required: 'Date is required' })}
+                  type="date"
+                  className="form-input"
+                />
+                {errors.date && <span className="error">{errors.date.message}</span>}
               </div>
+
+              <div className="form-group">
+                <label className="form-label toggle-label">
+                  <input
+                    type="checkbox"
+                    checked={isAllDay}
+                    onChange={(e) => setIsAllDay(e.target.checked)}
+                    className="toggle-checkbox"
+                  />
+                  <span className="toggle-text">All day</span>
+                </label>
+              </div>
+
+              {!isAllDay && (
+                <div className="form-row">
+                  <div className="form-group">
+                    <label className="form-label">Start time</label>
+                    <input
+                      {...register('start_time', {
+                        required: !isAllDay ? 'Start time is required' : false
+                      })}
+                      type="time"
+                      className="form-input"
+                    />
+                    {errors.start_time && <span className="error">{errors.start_time.message}</span>}
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">End time</label>
+                    <input
+                      {...register('end_time', {
+                        required: !isAllDay ? 'End time is required' : false,
+                        validate: (value) => {
+                          if (isAllDay) return true
+                          if (!startTime || !value) return true
+                          return value > startTime || 'End time must be after start time'
+                        }
+                      })}
+                      type="time"
+                      className="form-input"
+                    />
+                    {errors.end_time && <span className="error">{errors.end_time.message}</span>}
+                  </div>
+                </div>
+              )}
 
               <div className="form-group">
                 <label className="form-label">Location</label>
@@ -373,7 +424,26 @@ function Events() {
           margin-bottom: 8px;
           color: #333;
         }
-        
+
+        .toggle-label {
+          display: flex;
+          align-items: center;
+          cursor: pointer;
+          user-select: none;
+        }
+
+        .toggle-checkbox {
+          width: 18px;
+          height: 18px;
+          margin-right: 8px;
+          accent-color: #FFB000;
+        }
+
+        .toggle-text {
+          font-size: 14px;
+          color: #333;
+        }
+
         @media (max-width: 768px) {
           .events-header {
             flex-direction: column;

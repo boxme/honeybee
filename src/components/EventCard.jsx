@@ -14,9 +14,11 @@ function EventCard({ event, currentUserId, onEdit, onDelete }) {
 
         <div className="event-info">
           <h3>{event.title}</h3>
-          {event.time && (
-            <div className="event-time">🕒 {event.time}</div>
-          )}
+          <div className="event-time">
+            {event.start_time && event.end_time
+              ? `🕒 ${event.start_time} - ${event.end_time}`
+              : '🕒 All day'}
+          </div>
           {event.location && (
             <div className="event-location">📍 {event.location}</div>
           )}

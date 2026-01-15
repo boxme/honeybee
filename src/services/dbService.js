@@ -19,6 +19,7 @@ class DatabaseService {
       if (existingDb) {
         const uInt8Array = new Uint8Array(JSON.parse(existingDb))
         this.db = new SQL.Database(uInt8Array)
+        this.migrateIfNeeded()
       } else {
         this.db = new SQL.Database()
         this.createTables()
@@ -38,7 +39,8 @@ class DatabaseService {
         title TEXT NOT NULL,
         description TEXT,
         date TEXT NOT NULL,
-        time TEXT,
+        start_time TEXT,
+        end_time TEXT,
         location TEXT,
         created_by INTEGER NOT NULL,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
@@ -64,6 +66,35 @@ class DatabaseService {
     this.saveToStorage()
   }
 
+  migrateIfNeeded() {
+    try {
+      // Check if old 'time' column exists
+      const tableInfo = this.db.exec("PRAGMA table_info(events)")
+      if (tableInfo.length === 0) return
+
+      const columns = tableInfo[0].values.map(row => row[1])
+
+      if (columns.includes('time') && !columns.includes('start_time')) {
+        // Migration needed: add start_time and end_time, migrate data from time
+        this.db.exec('ALTER TABLE events ADD COLUMN start_time TEXT')
+        this.db.exec('ALTER TABLE events ADD COLUMN end_time TEXT')
+
+        // Copy time to start_time, set end_time to 1 hour later (as reasonable default)
+        this.db.exec(`
+          UPDATE events
+          SET start_time = time,
+              end_time = time
+          WHERE time IS NOT NULL
+        `)
+
+        this.saveToStorage()
+        console.log('Database migrated: time -> start_time/end_time')
+      }
+    } catch (error) {
+      console.error('Migration error:', error)
+    }
+  }
+
   saveToStorage() {
     if (this.db) {
       const data = this.db.export()
@@ -73,13 +104,13 @@ class DatabaseService {
 
   async getEvents() {
     await this.initialize()
-    const stmt = this.db.prepare('SELECT * FROM events ORDER BY date ASC, time ASC')
+    const stmt = this.db.prepare('SELECT * FROM events ORDER BY date ASC, start_time ASC')
     const events = []
-    
+
     while (stmt.step()) {
       events.push(stmt.getAsObject())
     }
-    
+
     stmt.free()
     return events
   }
@@ -87,23 +118,24 @@ class DatabaseService {
   async createEvent(event) {
     await this.initialize()
     const stmt = this.db.prepare(`
-      INSERT INTO events (title, description, date, time, location, created_by)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO events (title, description, date, start_time, end_time, location, created_by)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `)
-    
+
     stmt.run([
       event.title,
       event.description || null,
       event.date,
-      event.time || null,
+      event.start_time || null,
+      event.end_time || null,
       event.location || null,
       event.created_by
     ])
-    
+
     const id = this.db.exec('SELECT last_insert_rowid() as id')[0].values[0][0]
     stmt.free()
     this.saveToStorage()
-    
+
     return { id, ...event }
   }
 

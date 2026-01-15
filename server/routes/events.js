@@ -28,7 +28,7 @@ router.get('/', async (req, res) => {
       params.push(partnerId)
     }
 
-    query += ` ORDER BY e.date ASC, e.time ASC`
+    query += ` ORDER BY e.date ASC, e.start_time ASC`
 
     const result = await pool.query(query, params)
     res.json(result.rows)
@@ -40,15 +40,15 @@ router.get('/', async (req, res) => {
 
 // Create new event
 router.post('/', async (req, res) => {
-  const { title, description, date, time, location } = req.body
+  const { title, description, date, start_time, end_time, location } = req.body
   const pool = req.app.locals.pool
 
   try {
     const result = await pool.query(
-      `INSERT INTO events (title, description, date, time, location, created_by)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO events (title, description, date, start_time, end_time, location, created_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING *`,
-      [title, description, date, time, location, req.user.id]
+      [title, description, date, start_time, end_time, location, req.user.id]
     )
 
     const event = result.rows[0]
@@ -67,7 +67,7 @@ router.post('/', async (req, res) => {
 // Update event
 router.put('/:id', async (req, res) => {
   const { id } = req.params
-  const { title, description, date, time, location } = req.body
+  const { title, description, date, start_time, end_time, location } = req.body
   const pool = req.app.locals.pool
 
   try {
@@ -89,11 +89,11 @@ router.put('/:id', async (req, res) => {
     }
 
     const result = await pool.query(
-      `UPDATE events 
-       SET title = $1, description = $2, date = $3, time = $4, location = $5, updated_at = CURRENT_TIMESTAMP
-       WHERE id = $6
+      `UPDATE events
+       SET title = $1, description = $2, date = $3, start_time = $4, end_time = $5, location = $6, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $7
        RETURNING *`,
-      [title, description, date, time, location, id]
+      [title, description, date, start_time, end_time, location, id]
     )
 
     const event = result.rows[0]
@@ -152,12 +152,12 @@ router.post('/sync', async (req, res) => {
       if (event.id && event.id > 0) {
         // This is a local event that needs to be synced to server
         const result = await pool.query(
-          `INSERT INTO events (title, description, date, time, location, created_by)
-           VALUES ($1, $2, $3, $4, $5, $6)
+          `INSERT INTO events (title, description, date, start_time, end_time, location, created_by)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)
            RETURNING *`,
-          [event.title, event.description, event.date, event.time, event.location, req.user.id]
+          [event.title, event.description, event.date, event.start_time, event.end_time, event.location, req.user.id]
         )
-        
+
         syncedEvents.push({
           localId: event.id,
           remoteId: result.rows[0].id,

@@ -158,8 +158,8 @@ function mergeEvents(localEvents, remoteEvents) {
   })
   
   return Array.from(eventMap.values()).sort((a, b) => {
-    const dateA = new Date(a.date + (a.time ? ` ${a.time}` : ''))
-    const dateB = new Date(b.date + (b.time ? ` ${b.time}` : ''))
+    const dateA = new Date(a.date + (a.start_time ? ` ${a.start_time}` : ''))
+    const dateB = new Date(b.date + (b.start_time ? ` ${b.start_time}` : ''))
     return dateA - dateB
   })
 }
