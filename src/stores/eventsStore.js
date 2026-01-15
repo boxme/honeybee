@@ -79,8 +79,10 @@ export const useEventsStore = create((set, get) => ({
       // Try to sync with remote
       try {
         const event = updatedEvents.find(e => e.id === eventId)
-        if (event?.remote_id) {
-          await eventsService.updateEvent(event.remote_id, updates)
+        // For locally created events, use remote_id; for server-originated events, use id
+        const remoteId = event?.remote_id || (event?.synced ? event.id : null)
+        if (remoteId) {
+          await eventsService.updateEvent(remoteId, updates)
         }
       } catch (syncError) {
         console.log('Event updated locally, will sync when online')
